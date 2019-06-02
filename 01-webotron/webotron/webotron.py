@@ -1,33 +1,52 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+Webotron automates the process of deploying static web
+- Configure AWS S3 buckets 
+    - Create them 
+    - Set them up for static website hosting
+    - Deploy local files to them
+- Configure DNS with AWS route Route 53
+- Configure a Content Delivery Network and SSL with AWS CloudFront
+"""
+
+from pathlib import Path 
+import mimetypes
+import webbrowser
+
 import boto3
 import click
 from botocore.exceptions import ClientError
-from pathlib import Path 
+
 
 session = boto3.Session(profile_name='pythonAutomation')
 s3 = session.resource('s3')
 
+
 @click.group()
 def cli():
-    "Webotron deploys websites to AWS"
+    """Webotron deploys websites to AWS"""
     pass
 
 @cli.command('list-buckets')
 def list_bucket():
-    "List all s3 buckets"
+    """List all s3 buckets"""
     for bucket in s3.buckets.all():
         print(bucket)
+
 
 @cli.command('list-bucket-objects')
 @click.argument('bucket')
 def list_bucket_objects(bucket):
-    "List objects in an s3 buckets"
+    """List objects in an s3 buckets"""
     for obj in s3.Bucket(bucket).objects.all():
         print(obj)
+
 
 @cli.command('setup-bucket')
 @click.argument('bucket')
 def setup_bucket(bucket):
-    "Create and configure S3 bucket"
+    """Create and configure S3 bucket"""
     s3_bucket = None
     try:
         s3_bucket = s3.create_bucket(
@@ -69,8 +88,39 @@ def setup_bucket(bucket):
             'Suffix': 'index.html'
         }
     })
-
     return
+
+
+def upload_file(s3_bucket, path, key):
+    content_type = mimetypes.guess_type(key)[0] or 'text/plain'
+    s3_bucket.upload_file(
+        path,
+        key,
+        ExtraArgs={
+            'ContentType': content_type
+        }
+    )
+
+
+@cli.command('sync')
+@click.argument('pathname', type=click.Path(exists=True))
+@click.argument('bucket')
+def sync(pathname, bucket):
+    """Sync contents of PATHNAME to BUCKET"""
+    s3_bucket = s3.Bucket(bucket)
+    # .expanduser(): get the full absolute path of the given folder
+    root = Path(pathname).expanduser().resolve()
+
+    def handle_directory(target):
+        for p in target.iterdir():
+            print("uploading...")
+            if p.is_dir(): handle_directory(p)
+            if p.is_file(): upload_file(s3_bucket, str(p), str(p.relative_to(root)).replace("\\","/"))
+    handle_directory(root)
+    websiteUrl = "http://%s.s3-website-ap-southeast-2.amazonaws.com" % bucket
+    webbrowser.open(websiteUrl)
+
+   
 
 
 if __name__ == '__main__':
