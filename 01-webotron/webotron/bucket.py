@@ -5,12 +5,28 @@ from botocore.exceptions import ClientError
 import mimetypes
 from pathlib import Path
 import webbrowser
+import util
 
 class BucketManager:
     """Manage an S3 bucket."""
     def __init__(self, session):
         """Create a BucketManager object."""
         self.s3 = session.resource('s3')
+        self.session = session
+
+    def get_region_name(self, bucket):
+        """Get the bucket's region name."""
+        client = self.s3.meta.client
+        bucket_location = client.get_bucket_location(Bucket=bucket.name)
+
+        return bucket_location["LocationConstraint"] or 'us-east-1'
+
+    def get_bucket_url(self, bucket):
+        """Get the website URL for this bucket."""
+        return "http://{}.{}".format(
+            bucket.name,
+            util.get_endpoint(self.get_region_name(bucket)).host
+            )
     
     def all_buckets(self):
         """Get an iterator for all buckets"""
@@ -20,13 +36,13 @@ class BucketManager:
         """Get an iterator for all objects in the given bucket"""
         return self.s3.Bucket(bucket).objects.all()
     
-    def init_bucket(self, bucket_name, session):
+    def init_bucket(self, bucket_name):
         """Create a new bucket, or return existing one by name."""
         s3_bucket = None
         try:
             s3_bucket = self.s3.create_bucket(
                 Bucket= bucket_name,
-                CreateBucketConfiguration={'LocationConstraint': session.region_name}
+                CreateBucketConfiguration={'LocationConstraint': self.session.region_name}
             )
         except ClientError as e:
             if e.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
@@ -69,7 +85,8 @@ class BucketManager:
             }
         })
 
-    def upload_file(self, bucket, path, key):
+    @staticmethod
+    def upload_file(bucket, path, key):
         content_type = mimetypes.guess_type(key)[0] or 'text/plain'
         return bucket.upload_file(
             path,
@@ -90,8 +107,8 @@ class BucketManager:
                 if p.is_dir(): handle_directory(p)
                 if p.is_file(): self.upload_file(s3_bucket, str(p), str(p.relative_to(root)).replace("\\","/"))
         handle_directory(root)
-        websiteUrl = "http://%s.s3-website-ap-southeast-2.amazonaws.com" % bucket_name
-        webbrowser.open(websiteUrl)
+        # websiteUrl = "http://%s.s3-website-ap-southeast-2.amazonaws.com" % bucket_name
+        # webbrowser.open(websiteUrl)
         
 
     

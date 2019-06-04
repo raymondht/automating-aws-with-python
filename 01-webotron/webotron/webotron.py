@@ -9,9 +9,11 @@ Webotron automates the process of deploying static web
 - Configure DNS with AWS route Route 53
 - Configure a Content Delivery Network and SSL with AWS CloudFront
 """
+from bucket import BucketManager
+import webbrowser
+
 import boto3
 import click
-from bucket import BucketManager
 
 session = boto3.Session(profile_name='pythonAutomation')
 BucketManager = BucketManager(session)
@@ -55,6 +57,7 @@ def setup_bucket(bucket_name):
 def sync(pathname, bucket_name):
     """Sync contents of PATHNAME to BUCKET"""
     BucketManager.sync(pathname, bucket_name)
+    webbrowser.open(BucketManager.get_bucket_url(BucketManager.s3.Bucket(bucket_name)))
 
 if __name__ == '__main__':
     cli()
