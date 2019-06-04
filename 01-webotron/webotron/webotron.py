@@ -15,20 +15,30 @@ import webbrowser
 import boto3
 import click
 
-session = boto3.Session(profile_name='pythonAutomation')
-BucketManager = BucketManager(session)
-# 
+session = None
+bucket_manager = None
 
 
 @click.group()
-def cli():
-    """Webotron deploys websites to AWS"""
-    pass
+@click.option('--profile', default=None,
+              help="Use a given AWS profile.")
+def cli(profile):
+    """Webotron deploys websites to AWS."""
+    global session, bucket_manager
+    
+    session_cfg = {}
+    if profile:
+        session_cfg['profile_name'] = profile
+    else:
+        session_cfg['profile_name'] = "pythonAutomation"
+
+    session = boto3.Session(**session_cfg)
+    bucket_manager = BucketManager(session)
 
 @cli.command('list-buckets')
 def list_bucket():
     """List all s3 buckets"""
-    for bucket in BucketManager.all_buckets():
+    for bucket in bucket_manager.all_buckets():
         print(bucket)
 
 
@@ -36,7 +46,7 @@ def list_bucket():
 @click.argument('bucket')
 def list_bucket_objects(bucket):
     """List objects in an s3 buckets"""
-    for obj in BucketManager.all_objects(bucket):
+    for obj in bucket_manager.all_objects(bucket):
         print(obj)
 
 
@@ -44,11 +54,11 @@ def list_bucket_objects(bucket):
 @click.argument('bucket_name')
 def setup_bucket(bucket_name):
     """Create and configure S3 bucket"""
-    bucket = BucketManager.init_bucket(bucket_name, session)
+    bucket = bucket_manager.init_bucket(bucket_name, session)
     #Set bucket policy to be readable by everyone
-    BucketManager.set_policy(bucket)
+    bucket_manager.set_policy(bucket)
     #Configure website
-    BucketManager.configure_website(bucket)
+    bucket_manager.configure_website(bucket)
     return
 
 @cli.command('sync')
@@ -56,8 +66,8 @@ def setup_bucket(bucket_name):
 @click.argument('bucket_name')
 def sync(pathname, bucket_name):
     """Sync contents of PATHNAME to BUCKET"""
-    BucketManager.sync(pathname, bucket_name)
-    webbrowser.open(BucketManager.get_bucket_url(BucketManager.s3.Bucket(bucket_name)))
+    bucket_manager.sync(pathname, bucket_name)
+    webbrowser.open(bucket_manager.get_bucket_url(bucket_manager.s3.Bucket(bucket_name)))
 
 if __name__ == '__main__':
     cli()
