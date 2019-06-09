@@ -6,6 +6,11 @@ and optionally configure Route 53 and Cloudfront as well.
 
 ### Features:
 
-Webotron is currently having these feautres:
+Webotron is currently having these features:
 - List bucket
 - List objects of a given bucket
+- Create and set up bucket
+- Sync directory tree to bucket
+- Set AWS profile with --profile=<profileName>
+- Delete bucket
+- Configure route 53 domain

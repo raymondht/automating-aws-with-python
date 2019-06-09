@@ -26,12 +26,24 @@ class BucketManager:
         )
         self.manifest = {}
 
+
     def get_region_name(self, bucket):
         """Get the bucket's region name."""
         client = self.s3.meta.client
         bucket_location = client.get_bucket_location(Bucket=bucket.name)
 
         return bucket_location["LocationConstraint"] or 'us-east-1'
+
+    def delete_bucket(self, bucket_name):
+        bucket = self.get_bucket(bucket_name)
+        for key in bucket.objects.all():
+            key.delete()
+        bucket.delete()
+
+    def get_bucket(self, bucket_name):
+        """Get a bucket by name."""
+        return self.s3.Bucket(bucket_name)
+
 
     def get_bucket_url(self, bucket):
         """Get the website URL for this bucket."""
@@ -40,6 +52,7 @@ class BucketManager:
             util.get_endpoint(self.get_region_name(bucket)).host
         )
     
+
     def load_manifest(self, bucket_name):
         """Load manifest for caching purposes."""
         paginator = self.s3.meta.client.get_paginator('list_objects_v2')
@@ -47,6 +60,7 @@ class BucketManager:
             for obj in page.get('Contents', []):
                 self.manifest[obj['Key']] = obj['ETag']
     
+
     def all_buckets(self):
         """Get an iterator for all buckets"""
         return self.s3.buckets.all()
