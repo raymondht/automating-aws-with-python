@@ -14,3 +14,4 @@ Webotron is currently having these features:
 - Set AWS profile with --profile=<profileName>
 - Delete bucket
 - Configure route 53 domain
+- Set up and configure CDN with the certificate created by AWS Certificate Manager
