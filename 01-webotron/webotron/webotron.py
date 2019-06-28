@@ -39,7 +39,7 @@ def cli(profile):
     if profile:
         session_cfg['profile_name'] = profile
     else:
-        session_cfg['profile_name'] = "pythonAutomation"
+        session_cfg['profile_name'] = "default"
 
     session = boto3.Session(**session_cfg)
     bucket_manager = BucketManager(session)
