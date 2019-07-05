@@ -64,13 +64,18 @@ def list_bucket_objects(bucket):
 
 @cli.command('setup-bucket')
 @click.argument('bucket_name')
-def setup_bucket(bucket_name):
+@click.option('--type', default=None,
+              help="SPA type has different configuration")
+def setup_bucket(bucket_name, type):
     """Create and configure S3 bucket"""
     bucket = bucket_manager.init_bucket(bucket_name)
     #Set bucket policy to be readable by everyone
     bucket_manager.set_policy(bucket)
     #Configure website
-    bucket_manager.configure_website(bucket)
+    if type == 'spa':
+        bucket_manager.configure_website_spa(bucket)
+    else:
+        bucket_manager.configure_website(bucket)
     return
 
 

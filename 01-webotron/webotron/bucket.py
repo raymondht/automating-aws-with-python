@@ -117,6 +117,17 @@ class BucketManager:
                 'Suffix': 'index.html'
             }
         })
+    
+    def configure_website_spa(self, bucket):
+        ws = bucket.Website()
+        ws.put(WebsiteConfiguration={
+            'ErrorDocument': {
+                'Key': 'index.html'
+            },
+            'IndexDocument': {
+                'Suffix': 'index.html'
+            }
+        })
 
 
     @staticmethod
