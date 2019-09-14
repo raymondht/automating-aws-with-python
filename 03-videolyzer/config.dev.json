@@ -1,0 +1,7 @@
+{
+    "videolyzer": {
+      "profile": "default",
+      "videos_bucket": "videolyzayrusdev",
+      "videos_table": ""
+    }
+  }

@@ -1,0 +1,26 @@
+
+
+service: videolyzer
+#app: your-app-name
+#tenant: your-tenant-name
+
+# You can pin your service to only deploy with a specific Serverless version
+# Check out our docs for more details
+# frameworkVersion: "=X.X.X"
+
+provider:
+  name: aws
+  runtime: python3.7
+  profile: ${file(../config.${self:provider.stage}.json):videolyzer.profile}
+
+
+
+functions:
+  startProcessingVideo:
+    handler: handler.start_processing_video
+    events:
+      - s3:
+          bucket: ${file(../config.${self:provider.stage}.json):videolyzer.videos_bucket}
+          event: s3:ObjectCreated:*
+          rules:
+            - suffix: .mp4
