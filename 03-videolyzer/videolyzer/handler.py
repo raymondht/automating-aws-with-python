@@ -18,5 +18,11 @@ def start_label_detection(bucket, key):
 
 def start_processing_video(event, context):
     print(event)
-
+    for record in event['Records']:
+        bucketName = record['s3']['bucket']['name']
+        key = urllib.parse.unquote_plus(record['s3']['object']['key'])
+        start_label_detection(
+            bucketName,
+            key
+        )
     return
